@@ -1,0 +1,13 @@
+---
+# handlers file for sensuserver
+- name: restart sensuserver
+  service: name={{ item }} state=restarted enabled=yes
+  with_items:
+  - sensu-server
+  - sensu-api
+
+- name: restart rabbitmq
+  service: name=rabbitmq-server state=restarted enables=yes
+
+- name: restart uchiwa
+  service: name=uchiwa state=restarted enabled=yes

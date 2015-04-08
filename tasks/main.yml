@@ -1,0 +1,119 @@
+---
+# tasks file for sensuserver
+ - name: Install libselinux
+   yum: name=libselinux-python state=installed
+
+ - name: Install the EPEL repos
+   copy: src=repo/epel.repo  dest=/etc/yum.repos.d/epel.repo  owner=root group=root
+
+ - name: Install the SENSU repos
+   copy: src=repo/sensu.repo dest=/etc/yum.repos.d/sensu.repo owner=root group=root
+
+ - name: Install the erlang esl repo
+   yum: pkg={{ erlang_repo }} state=installed
+
+ - name: Install the custom requirements
+   yum: pkg={{ item }} state=installed
+   with_items:
+    - erlang
+    - java7
+    - python-twisted
+    - python-pip
+    - memcached
+    - bc
+    - redis
+    - libyaml
+    - sensu
+    - uchiwa
+
+ - name: Install the custom ruby
+   yum: pkg={{ ruby_rpm }}  state=installed
+
+ - name: Install with python-pip
+   pip: name={{ item }} state=present
+   with_items:
+    - txAMQP
+    - whisper
+    - carbon
+
+ - name: Install rabbitMQ
+   yum: pkg={{ rabbit_stable }} state=installed
+
+ - name: Create the rabbitmq-ssl store dir
+   file: path={{ rabbitmq_ssl_dir }} state=directory
+
+ - name: Sensu gem dependencies
+   gem: name={{ item }} state=present
+   with_items:
+   - bundler
+   - sensu-plugin
+   - json
+   - mail
+   - rest-client
+
+ - name: Install influxdb for metrics
+   yum: pkg={{ influxdb_rpm }} state=installed
+
+ - name: Start the rabbitmq server
+   service: name=rabbitmq-server state=started
+
+ - name: enable the rabbitmq plugins
+   rabbitmq_plugin: names=rabbitmq_management state=enabled
+
+ - name: Copy over the rabbitmq server certificates that rabbitmq will use for SSL
+   copy: src={{ item }} dest={{ rabbitmq_ssl_dir }} owner=root
+   with_fileglob:
+    - certs/*
+
+ - name: Insert the rabbitmq-conf file for ssl
+   template: src=conf/rabbitmq.j2 dest=/etc/rabbitmq/rabbitmq.config owner=root group=users
+
+ - name: Inset the rabbitmq-env file
+   file: dest=/etc/rabbitmq/rabbitmq-env.conf state=touch owner=rabbitmq
+
+ - name: Make the log file in /data
+   file: dest=/data/rabbitmq state=directory owner=rabbitmq
+
+ - name: Change the dir for rabbitlogs
+   lineinfile: dest=/etc/rabbitmq/rabbitmq-env.conf line="LOG_BASE=/data/rabbitmq" state=present
+
+ - name: Install the sensu config file
+   template: src=conf/config.j2 dest=/etc/sensu/config.json owner=root group=users
+
+ - name: Add sensu vhost
+   rabbitmq_vhost: name={{ sensu_vhost_name }} state=present
+
+ - name: Add sensu user
+   rabbitmq_user: user={{ sensu_user }} password={{ sensu_password }} vhost={{ sensu_vhost_name }} tags=administrator,{{ sensu_user }} configure_priv=.* read_priv=.* write_priv=.* state=present
+
+ - name: Remove the default user (guest)
+   rabbitmq_user: user=guest vhost=/ state=absent
+
+ - name: Install wizardvan
+   git: repo={{ wizardvan_repo }} dest=/tmp/wzdv accept_hostkey=yes
+
+ - name: Make the default file
+   file: dest=/etc/default/graphite-carbon state=touch
+
+ - name: Configure graphite carbon
+   lineinfile: dest=/etc/default/graphite-carbon line="CARBON_CACHE_ENABLED=true" state=present
+
+ - name: Make the sensu use embedded ruby version
+   lineinfile: "dest=/etc/default/sensu regexp='^EMBEDDED_RUBY=false' line='EMBEDDED_RUBY=true' state=present"
+
+ - name: Install the wizardvan extensions
+   shell: cp -R /tmp/wzdv/lib/sensu/extensions/* /etc/sensu/extensions/
+
+ - name: Configure wizardvan relay
+   copy: src=conf/relay.json dest=/etc/sensu/conf.d/relay.json owner=root group=users
+
+ - name: Configure uchiwa
+   template: src=conf/uchiwa.j2 dest=/etc/sensu/uchiwa.json owner=uchiwa group=users mode=0644
+
+ - name: Restart the servers
+   command: echo "Reboot"
+   notify:
+   - restart rabbitmq
+   - restart sensuserver
+   - restart uchiwa
+

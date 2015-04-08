@@ -1,0 +1,21 @@
+{
+      "rabbitmq": {
+        "ssl": {
+          "private_key_file": "{{ rabbitmq_ssl_dir }}/sensu_client_key.pem",
+          "cert_chain_file": "{{ rabbitmq_ssl_dir }}/sensu_client_cert.pem"
+        },
+        "port": 5671,
+        "host": "localhost",
+        "user": "{{ sensu_user }}",
+        "password": "{{ sensu_password }}",
+        "vhost": "{{ sensu_vhost_name }}"
+      },
+      "redis": {
+        "host": "localhost",
+        "port": 6379
+      },
+      "api": {
+        "host": "localhost",
+        "port": 4567
+      }
+ }

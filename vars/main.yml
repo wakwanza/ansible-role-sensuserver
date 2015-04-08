@@ -1,0 +1,14 @@
+---
+# vars file for sensuserver
+ruby_rpm: http://rpms.southbridge.ru/rhel6/ruby-1.9.3/x86_64/ruby-1.9.3.p547-1.el6.x86_64.rpm
+erlang_repo: http://packages.erlang-solutions.com/erlang-solutions-1.0-1.noarch.rpm
+influxdb_rpm: http://s3.amazonaws.com/influxdb/influxdb-latest-1.x86_64.rpm
+rabbit_stable: http://www.rabbitmq.com/releases/rabbitmq-server/v3.4.3/rabbitmq-server-3.4.3-1.noarch.rpm
+sensu_vhost_name: /sensu
+sensu_password: passwordforsensu
+rabbitmq_ssl_dir: /etc/ssl/certs/custom/rabbitmq
+sensu_user: sensu
+wizardvan_repo: git://github.com/opower/sensu-metrics-relay.git
+uchiwa_user: uchiwa
+uchiwa_pass: passwordforuchiwa
+sitename: nameofsite
